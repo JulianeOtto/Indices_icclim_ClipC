@@ -51,7 +51,7 @@ import icclim.util.callback as callback
     + calc_indicator_statistics_tasmax.sh
 
 6. Append rlat,rlon as variables to statistics indices files produces in the previous step with:
-    + append_rename_vars_nc_nco.sh
+    + calc_indicator_statistics_tasmax.sh
 
 7. Change global metadata fields "title" and "summary" for ensemble indices:
     + titles_summaries_tasmax.sh
