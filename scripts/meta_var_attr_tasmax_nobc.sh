@@ -1,50 +1,59 @@
 #!/bin/bash
 #
 #==========================================================================================================================================
-# correct variable attributes for tasmax NoBC indices
+# Add metadate to global and correct variable attributes for tasmax NoBC indices - use as an example
 #==========================================================================================================================================
 #
 #C.Photiadou 2016/07/25
 # Directories
-#dir_in='/nobackup/users/photiado/example_clipc_metadata/'
-indir='tasmax_no_bc' #pr tas tasmin pr_no_bc tas_no_bc tasmin_no_bc
-dir_in='/nobackup/users/photiado/icclim_indices_v4.2.3_seapoint_metadata_fixed/EUR-44/No_BC/tasmax/'
+dir_in= #'enter general directory path'
+indir='tasmax_no_bc'
+## name of routines used for calculation & name of institute
 path_ic_inst='icclim-4-2-3_KNMI'
+## realization, RCM, domain, & freq of indices (if bias corrected then bcmethod, bcref, bcobs should be included)
 path_real_bc='r1i1p1_SMHI-RCA4_v1_EUR-44_yr'
 #=====================
 # Variables
 #=====================
+## IFS can be ignored...
 IFS=$'\n'
+## gcms used in this analysis
 gcms=('CCCma-CanESM2' 'CNRM-CM5' 'CSIRO-Mk3-6-0' 'EC-EARTH' 'IPSL-CM5A-MR' 'MIROC5' 'HadGEM2-ES' 'MPI-ESM-LR' 'NorESM1-M' 'GFDL-ESM2M')
+## indices used: ice days, summer days, annual mean of maximum temperature
 ind=('ID' 'SU' 'TX')
 indices=('id' 'su' 'tx')
-invar_vari='tasmax' #'pr' #'tasminAdjust' 'prAdjust' 'tasAdjust' #tas(nobc)
+invar_vari='tasmax' #for bc it should be tasmaxAdjust
+## experiments
 exper=('rcp45' 'rcp85' 'historical')
-#bc_method='DBS43' # none
-var_gl='pr' # 'tasmin' 'tasmax' 'tasmin'
+## time periods for rcp4.5, rcp8.5, historical
 time_cov_start=('20060101' '20060101' '19700101')
 time_cov_end=('20991231' '20991231' '20051231')
+## titles for each index
 titles=("id: icing days" \
 		"su: summer days" \
 		"tx: mean of daily maximum temperature")
+## summaries for each index - diff between ETCCDI & ECA&D indices
 summaries=("id is a climate change index definied by the ETCCDI. The indicator counts the number of day where the daily maximum temperature is below 0 degC during a year for a given location" \
 		   "su is a climate change index by ETCCDI. The indicator counts the number of days where daily maximum temperature is above 25 degC during a year for a given location" \
 		   "tx is a climate change index definied by the ECA&D. The indicator measures the mean of daily maximum temperature during a year for a given location")
+
 #========================================================================
 ### Fix issue for EC_EARTH and HadGem but remember to bringit back at the end!
+### EC-EARTH has different realization adn HadGEM different end dates
 #========================================================================
 
 gcm_ec='EC-EARTH'
 gcm_ha='HadGEM2-ES'
+## hadgem end dates
 had_time_end=('20991130' '20991230' '20051230')
 
- for k in {0..2}; do #indices
+ for k in {0..2}; do 
 	echo
 			echo "Rename EC-EARTH & HadGEM"
 			echo ${indices[k]} 
 
 		echo
-	for i in {0..2}; do #exper
+	for i in {0..2}; do 
 		echo ${exper[i]} 
 		echo 
 		mv ${dir_in}${indices[k]}_${path_ic_inst}_${gcm_ec}_${exper[i]}_r12i1p1_SMHI-RCA4_v1_EUR-44_yr_${time_cov_start[i]}-${time_cov_end[i]}.nc ${dir_in}${indices[k]}_${path_ic_inst}_${gcm_ec}_${exper[i]}_${path_real_bc}_${time_cov_start[i]}-${time_cov_end[i]}.nc
@@ -52,9 +61,9 @@ had_time_end=('20991130' '20991230' '20051230')
 		mv ${dir_in}${indices[k]}_${path_ic_inst}_${gcm_ha}_${exper[i]}_${path_real_bc}_${time_cov_start[i]}-${had_time_end[i]}.nc ${dir_in}${indices[k]}_${path_ic_inst}_${gcm_ha}_${exper[i]}_${path_real_bc}_${time_cov_start[i]}-${time_cov_end[i]}.nc
 	done
 done
-#========================================================================
-### Add metadata that are different for every GCM, variable, experiment 
-#========================================================================
+#======================================================================================================
+### Add metadata to global with ncatted - some are different for every GCM, variable, experiment 
+#======================================================================================================
 for k in {0..2}; do #indices
 	echo ${indices[k]}
 	for j in {0..9}; do  #gcms
@@ -179,7 +188,7 @@ for k in {0..2}; do #indices
 
             ncatted -O -a invar_tracking_id,global,o,c,' ' -h ${dir_in}${indices[k]}_${path_ic_inst}_${gcms[j]}_${exper[i]}_${path_real_bc}_${time_cov_start[i]}-${time_cov_end[i]}.nc
 
-			## this is for tx
+			## this is for tx - not an ETCCDI index
 		  		 if [ "${indices[k]}" = "tx" ]; then
 
 				ncatted -O -a comment,global,o,c,'ECA&D stands for European Climate Assessment & Dataset' -h ${dir_in}${indices[k]}_${path_ic_inst}_${gcms[j]}_${exper[i]}_${path_real_bc}_${time_cov_start[i]}-${time_cov_end[i]}.nc	
@@ -189,6 +198,7 @@ for k in {0..2}; do #indices
 				ncatted -O -a standard_name,${indices[k]},o,c,'ECA&D_indice' -h ${dir_in}${indices[k]}_${path_ic_inst}_${gcms[j]}_${exper[i]}_${path_real_bc}_${time_cov_start[i]}-${time_cov_end[i]}.nc	
 			fi
 			
+			## issue with EC-EARTH realis & HadGEM end period
 			if [ "${gcms[j]}" = "EC-EARTH" ]; then
 			    ncatted -O -a invar_ensemble_member,global,o,c,r12i1p1 -h ${dir_in}${indices[k]}_${path_ic_inst}_${gcms[j]}_${exper[i]}_${path_real_bc}_${time_cov_start[i]}-${time_cov_end[i]}.nc
 
@@ -213,8 +223,8 @@ done
 ### Correct filename for EC-EARTH & HadGem!
 #========================================================================
 
-for k in {0..2}; do #indices
-	for i in {0..2}; do #exper
+for k in {0..2}; do 
+	for i in {0..2}; do
 	echo
 	echo "Rename back EC-EARTH & HadGEM"
 	echo
